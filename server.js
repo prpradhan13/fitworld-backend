@@ -10,7 +10,7 @@ import dietRoute from './routes/dietRoute.js';
 // import { fileURLToPath } from 'url';
 
 // config env
-dotenv.config();
+dotenv.config({path: "./.env"});
 
 // Database configuration
 connectDB();
