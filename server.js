@@ -41,6 +41,10 @@ app.use('/api/diet', dietRoute);
 
 const PORT = process.env.PORT || 8080
 
-app.listen(PORT, (req, res) => {
+app.get('/', (req, res) => {
+    res.send("Welcome")
+})
+
+app.listen(PORT, () => {
     console.log(`Connected to port ${PORT}`);
 })
