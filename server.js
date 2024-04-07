@@ -23,11 +23,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:3000", process.env.CLIENT_URL],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-}));
+app.use(cors());
 // app.use(express.static(path.join(__dirname, './client/dist')))
 
 // Routes
