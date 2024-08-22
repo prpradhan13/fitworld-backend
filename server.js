@@ -16,6 +16,8 @@ connectDB();
 const app = express();
 
 // Middleware
+// Use Helmet to secure the app by setting various HTTP headers
+app.use(helmet()); // Default security headers, including CSP
 app.use(express.json());
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
