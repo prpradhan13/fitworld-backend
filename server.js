@@ -6,6 +6,7 @@ import authRoute from './routes/authRoute.js';
 import categoryRoute from './routes/categoryRoute.js';
 import fileRoute from './routes/fileRoute.js';
 import dietRoute from './routes/dietRoute.js';
+import helmet from 'helmet';
 
 // config env
 dotenv.config({path: "./.env"});
