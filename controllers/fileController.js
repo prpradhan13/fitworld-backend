@@ -1,6 +1,9 @@
 import fileModel from "../models/fileModel.js";
 import fs from "fs";
 import slugify from "slugify";
+import NodeCache from 'node-cache';
+
+const cache = new NodeCache();
 
 const createFileController = async (req, res) => {
   try {
@@ -27,13 +30,16 @@ const createFileController = async (req, res) => {
     }
 
     await fileInfo.save();
+
+    // Clear cache after creating a new file
+    cache.del('allFilesInfo');
+
     res.status(200).send({
       success: true,
       message: "Product Created Successfully",
       fileInfo,
     });
   } catch (error) {
-    console.log(error);
     res.status(404).send({
       success: false,
       message: "Error Creating Product",
@@ -72,13 +78,16 @@ const updateFileController = async (req, res) => {
 
     await fileInfo.save();
 
+     // Clear cache after updating a file
+     cache.del('allFilesInfo');
+     cache.del(`file_${req.params.fid}`);
+
     res.status(200).send({
       success: true,
       message: "File Update Successfully",
       fileInfo,
     });
   } catch (error) {
-    console.log(error);
     res.status(404).send({
       success: false,
       message: "Error Updating File",
@@ -88,11 +97,27 @@ const updateFileController = async (req, res) => {
 
 // Get File
 const getFileInfo = async (req, res) => {
+  const cacheKey = 'allFilesInfo';
+
+   // Check if data is in cache
+   const cachedData = cache.get(cacheKey);
+   if (cachedData) {
+     return res.status(200).send({
+         success: true,
+         total: cachedData.length,
+         message: "All FilesInfo (from cache)",
+         fileInfo: cachedData,
+     });
+   }
+
     try {
         const fileInfo = await fileModel
         .find({})
         .populate("category")
         .select("-file")
+
+      // Store the data in cache
+      cache.set(cacheKey, fileInfo);
   
       res.status(200).send({
         success: true,
@@ -101,7 +126,6 @@ const getFileInfo = async (req, res) => {
         fileInfo,
       }); 
     } catch (error) {
-        console.log(error);
         res.status(500).send({
             success: false,
             message: "Error getting fileInfo",
@@ -111,9 +135,21 @@ const getFileInfo = async (req, res) => {
 
 // Get File
 const getFileController = async (req, res) => {
+  const cacheKey = `file_${req.params.fid}`;
+
+  // Check if data is in cache
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    res.set("Content-Type", "application/pdf");
+    return res.status(200).send(cachedData);
+  }
+
     try {
       const rawFile = await fileModel.findById(req.params.fid).select("file");
       if (rawFile.file.data) {
+        // Store the file data in cache
+        cache.set(cacheKey, rawFile.file.data);
+
         res.set("Content-Type", "application/pdf");
         // res.set("Content-Disposition", `attachment; filename="${file.name}.pdf"`);
         return res.status(200).send(rawFile.file.data);
@@ -130,6 +166,11 @@ const getFileController = async (req, res) => {
 const deleteproductController = async (req, res) => {
     try {
       await fileModel.findByIdAndDelete(req.params.pid).select("-file");
+
+      // Clear cache after deleting a file
+    cache.del('allFilesInfo');
+    cache.del(`file_${req.params.pid}`);
+
       res
         .status(200)
         .send({ success: true, message: "Product deleted successfully" });
@@ -154,7 +195,6 @@ const searchFileController = async (req, res) => {
       res.json(results);
       
     } catch (error) {
-        console.log(error);
       res.status(400).send({
         success: false,
         message: "Error Search Product",
